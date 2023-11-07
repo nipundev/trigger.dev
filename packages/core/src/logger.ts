@@ -43,36 +43,37 @@ export class Logger {
   log(message: string, ...args: Array<Record<string, unknown> | undefined>) {
     if (this.#level < 0) return;
 
-    this.#structuredLog(console.log, message, ...args);
+    this.#structuredLog(console.log, message, "log", ...args);
   }
 
   error(message: string, ...args: Array<Record<string, unknown> | undefined>) {
     if (this.#level < 1) return;
 
-    this.#structuredLog(console.error, message, ...args);
+    this.#structuredLog(console.error, message, "error", ...args);
   }
 
   warn(message: string, ...args: Array<Record<string, unknown> | undefined>) {
     if (this.#level < 2) return;
 
-    this.#structuredLog(console.warn, message, ...args);
+    this.#structuredLog(console.warn, message, "warn", ...args);
   }
 
   info(message: string, ...args: Array<Record<string, unknown> | undefined>) {
     if (this.#level < 3) return;
 
-    this.#structuredLog(console.info, message, ...args);
+    this.#structuredLog(console.info, message, "info", ...args);
   }
 
   debug(message: string, ...args: Array<Record<string, unknown> | undefined>) {
     if (this.#level < 4) return;
 
-    this.#structuredLog(console.debug, message, ...args);
+    this.#structuredLog(console.debug, message, "debug", ...args);
   }
 
   #structuredLog(
     loggerFunction: (message: string, ...args: any[]) => void,
     message: string,
+    level: string,
     ...args: Array<Record<string, unknown> | undefined>
   ) {
     const structuredLog = {
@@ -80,6 +81,7 @@ export class Logger {
       timestamp: new Date(),
       name: this.#name,
       message,
+      level,
     };
 
     loggerFunction(JSON.stringify(structuredLog, createReplacer(this.#jsonReplacer)));
@@ -115,28 +117,6 @@ function safeJsonClone(obj: unknown) {
   } catch (e) {
     return obj;
   }
-}
-
-function formattedDateTime() {
-  const date = new Date();
-
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const seconds = date.getSeconds();
-  const milliseconds = date.getMilliseconds();
-
-  // Make sure the time is always 2 digits
-  const formattedHours = hours < 10 ? `0${hours}` : hours;
-  const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-  const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
-  const formattedMilliseconds =
-    milliseconds < 10
-      ? `00${milliseconds}`
-      : milliseconds < 100
-      ? `0${milliseconds}`
-      : milliseconds;
-
-  return `${formattedHours}:${formattedMinutes}:${formattedSeconds}.${formattedMilliseconds}`;
 }
 
 // If args is has a single item that is an object, return that object
@@ -185,7 +165,7 @@ function prettyPrintBytes(value: unknown): string {
     return "skipped size";
   }
 
-  const sizeInBytes = Buffer.byteLength(JSON.stringify(value), "utf8");
+  const sizeInBytes = getSizeInBytes(value);
 
   if (sizeInBytes < 1024) {
     return `${sizeInBytes} bytes`;
@@ -200,4 +180,16 @@ function prettyPrintBytes(value: unknown): string {
   }
 
   return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function getSizeInBytes(value: unknown) {
+  const jsonString = JSON.stringify(value);
+
+  if (typeof window === "undefined") {
+    // Node.js environment
+    return Buffer.byteLength(jsonString, "utf8");
+  } else {
+    // Browser environment
+    return new TextEncoder().encode(jsonString).length;
+  }
 }
