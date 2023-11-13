@@ -270,7 +270,6 @@ function ProjectSelector({
                   />
                 );
               })}
-              <PopoverMenuItem to={newProjectPath(organization)} title="New Project" icon="plus" />
             </div>
           </Fragment>
         ))}
