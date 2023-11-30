@@ -290,8 +290,28 @@
           ]
         },
         "integrations/apis/replicate",
-        "integrations/apis/resend",
-        "integrations/apis/sendgrid",
+        {
+          "group": "SendGrid",
+          "pages": [
+            "integrations/apis/sendgrid",
+            "integrations/apis/sendgrid-tasks"
+          ]
+        },
+        {
+          "group": "Resend",
+          "pages": [
+            "integrations/apis/resend",
+            "integrations/apis/resend-tasks"
+          ]
+        },
+        {
+          "group": "Shopify",
+          "pages": [
+            "integrations/apis/shopify",
+            "integrations/apis/shopify-triggers",
+            "integrations/apis/shopify-tasks"
+          ]
+        },
         {
           "group": "Slack",
           "pages": [
@@ -321,6 +341,12 @@
             "sdk/triggerclient/overview",
             "sdk/triggerclient/constructor",
             {
+              "group": "Instance properties",
+              "pages": [
+                "sdk/triggerclient/store"
+              ]
+            },
+            {
               "group": "Instance methods",
               "pages": [
                 "sdk/triggerclient/instancemethods/sendevent",
@@ -334,7 +360,9 @@
                 "sdk/triggerclient/instancemethods/define-http-endpoint",
                 "sdk/triggerclient/instancemethods/define-dynamic-trigger",
                 "sdk/triggerclient/instancemethods/define-dynamic-schedule",
-                "sdk/triggerclient/instancemethods/define-auth-resolver"
+                "sdk/triggerclient/instancemethods/define-auth-resolver",
+                "sdk/triggerclient/instancemethods/concurrency-limit",
+                "sdk/triggerclient/instancemethods/on"
               ]
             }
           ]
@@ -347,6 +375,7 @@
             "sdk/io/runtask",
             "sdk/io/sendevent",
             "sdk/io/sendevents",
+            "sdk/io/store",
             "sdk/io/wait",
             "sdk/io/wait-for-event",
             "sdk/io/wait-for-request",

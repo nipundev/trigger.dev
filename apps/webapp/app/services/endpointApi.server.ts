@@ -3,6 +3,7 @@ import {
   ConnectionAuth,
   EndpointHeadersSchema,
   ErrorWithStackSchema,
+  ExecuteJobHeadersSchema,
   HttpSourceResponseSchema,
   IndexEndpointResponseSchema,
   NormalizedResponseSchema,
@@ -14,8 +15,10 @@ import {
   RegisterTriggerBodyV1,
   RunJobBody,
   RunJobResponseSchema,
+  RunNotification,
   ValidateResponse,
   ValidateResponseSchema,
+  WebhookDeliveryResponseSchema,
 } from "@trigger.dev/core";
 import { performance } from "node:perf_hooks";
 import { safeBodyFromResponse, safeParseBodyFromResponse } from "~/utils/json";
@@ -148,6 +151,7 @@ export class EndpointApi {
       response,
       parser: RunJobResponseSchema,
       errorParser: ErrorWithStackSchema,
+      headersParser: ExecuteJobHeadersSchema,
       durationInMs: Math.floor(performance.now() - startTimeInMs),
     };
   }
@@ -248,6 +252,45 @@ export class EndpointApi {
     });
 
     return HttpSourceResponseSchema.parse(anyBody);
+  }
+
+  async deliverWebhookRequest(options: {
+    key: string;
+    secret: string;
+    params: any;
+    request: HttpSourceRequest;
+  }) {
+    const response = await safeFetch(this.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "x-trigger-api-key": this.apiKey,
+        "x-trigger-action": "DELIVER_WEBHOOK_REQUEST",
+        "x-ts-key": options.key,
+        "x-ts-secret": options.secret,
+        "x-ts-params": JSON.stringify(options.params ?? {}),
+        "x-ts-http-url": options.request.url,
+        "x-ts-http-method": options.request.method,
+        "x-ts-http-headers": JSON.stringify(options.request.headers),
+      },
+      body: options.request.rawBody,
+    });
+
+    if (!response) {
+      throw new Error(`Could not connect to endpoint ${this.url}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Could not connect to endpoint ${this.url}. Status code: ${response.status}`);
+    }
+
+    const anyBody = await response.json();
+
+    logger.debug("deliverWebhookRequest() response from endpoint", {
+      body: anyBody,
+    });
+
+    return WebhookDeliveryResponseSchema.parse(anyBody);
   }
 
   async deliverHttpEndpointRequestForResponse(options: {
@@ -366,6 +409,20 @@ export class EndpointApi {
       response,
       durationInMs: Math.floor(performance.now() - startTimeInMs),
     };
+  }
+
+  async deliverRunNotification(notification: RunNotification<any>) {
+    const response = await safeFetch(this.url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-trigger-api-key": this.apiKey,
+        "x-trigger-action": "RUN_NOTIFICATION",
+      },
+      body: JSON.stringify(notification),
+    });
+
+    return response;
   }
 }
 
